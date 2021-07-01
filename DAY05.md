@@ -4,7 +4,7 @@
 
 ```
 База (postgres)
-Host: postgres.finance.svc.k8s.dldevel
+Host: ##########
 Port: 5432
 Name: postgresdb
 User: postgresadmin
