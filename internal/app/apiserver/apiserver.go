@@ -36,6 +36,11 @@ func (s *APIServer) Start() error {
 		return err
 	}
 	log.Println("database successfully connected")
+	empl, err := s.store.Employee().GetByID(1)
+	if err != nil {
+		return err
+	}
+	log.Println(&empl)
 
 	return http.ListenAndServe(s.config.BindAddr, s.router)
 }

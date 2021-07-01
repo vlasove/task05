@@ -78,15 +78,12 @@ func (r *EmployeeRepository) GetAll() ([]*model.Employee, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var e model.Employee
-		if err := rows.Scan(
-			&e.Name, &e.LastName, &e.ID,
-			&e.Patronymic, &e.Phone, &e.Position, &e.GoodJobCount,
-		); err != nil {
+		e := new(model.Employee)
+		if err := rows.Scan(&e.Name); err != nil {
 			log.Println(err)
 			continue
 		}
-		empls = append(empls, &e)
+		empls = append(empls, e)
 	}
 
 	if err := rows.Err(); err != nil {
