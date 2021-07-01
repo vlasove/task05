@@ -1,7 +1,7 @@
 .PHONY: build, lint, test
 
 build:
-	go build -v ./cmd/api/
+	go build -v ./cmd/apiserver/
 
 lint:
 	golint ./... && golangci-lint run
