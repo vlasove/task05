@@ -36,6 +36,14 @@ func (s *server) setContentType(next http.Handler) http.Handler {
 	})
 }
 
+// setContentLang...
+func (s *server) setContentLang(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Language", "ru-en")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // checkContentType ...
 // func (s *server) checkContentType(next http.Handler) http.Handler {
 // 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
