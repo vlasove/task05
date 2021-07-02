@@ -13,6 +13,9 @@ type EmployeeRepository struct {
 
 // Create call employees.employee_add()
 func (r *EmployeeRepository) Create(e *model.Employee) error {
+	if err := e.Validate(); err != nil {
+		return err
+	}
 	_, err := r.store.db.Exec(
 		"SELECT employees.employee_add($1, $2, $3, $4, $5, $6)",
 		e.Name,
@@ -33,6 +36,9 @@ func (r *EmployeeRepository) Delete(id int) error {
 
 // Update call employees.employee_upd()
 func (r *EmployeeRepository) Update(e *model.Employee) error {
+	if err := e.Validate(); err != nil {
+		return err
+	}
 	_, err := r.store.db.Exec(
 		"SELECT employees.employee_update($1, $2, $3, $4, $5, $6, $7)",
 		e.ID,
@@ -51,7 +57,7 @@ func (r *EmployeeRepository) GetAll() ([]*model.Employee, error) {
 	empls := []*model.Employee{}
 	rows, err := r.store.db.Query("SELECT * FROM employees.employees_get_all()")
 	if err != nil {
-		return empls, err
+		return nil, err
 	}
 	defer rows.Close()
 
