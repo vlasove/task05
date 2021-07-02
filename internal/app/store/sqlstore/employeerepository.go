@@ -43,7 +43,7 @@ func (r *EmployeeRepository) Update(ctx context.Context, e *model.Employee) erro
 	}
 	_, err := r.store.db.ExecContext(
 		ctx,
-		"SELECT employees.employee_update($1, $2, $3, $4, $5, $6, $7)",
+		"SELECT employees.employee_upd($1, $2, $3, $4, $5, $6, $7)",
 		e.ID,
 		e.Name,
 		e.LastName,

@@ -63,3 +63,33 @@ func TestServer_HandleRetrieveAll(t *testing.T) {
 		assert.Equal(t, len(v["employees"]), 2)
 	})
 }
+
+func TestServer_HandleRetrieveByID(t *testing.T) {
+
+	t.Run("not existing id", func(t *testing.T) {
+		store := teststore.New()
+		s := newServer(store)
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/employees/1", nil)
+		s.ServeHTTP(rec, req)
+		assert.Equal(t, rec.Code, http.StatusInternalServerError)
+	})
+
+	t.Run("existing user", func(t *testing.T) {
+		store := teststore.New()
+		err := store.Employee().Create(context.Background(), model.TestEmployee(t))
+		assert.NoError(t, err)
+		s := newServer(store)
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/employees/1", nil)
+
+		s.ServeHTTP(rec, req)
+
+		assert.Equal(t, rec.Code, http.StatusOK)
+		var v *model.Employee
+		err = json.NewDecoder(rec.Body).Decode(&v)
+		assert.NoError(t, err)
+		assert.NotNil(t, v)
+
+	})
+}

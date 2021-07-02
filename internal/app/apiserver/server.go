@@ -2,8 +2,8 @@ package apiserver
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -37,15 +37,95 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) configureRouter() {
 	s.router.Use(s.logRequest)
-	s.router.Use(s.setContentType)
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
 	public := s.router.PathPrefix("/api/v1").Subrouter()
-	public.HandleFunc("/hello", s.handleHello()).Methods("GET")
+	//public.Use(s.checkContentType)
+	public.Use(s.setContentType)
 	public.HandleFunc("/employees", s.handleRetrieveAll()).Methods("GET")
+	public.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleRetrieveByID()).Methods("GET")
+	public.HandleFunc("/employees", s.handleCreate()).Methods("POST")
+	public.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleDelete()).Methods("DELETE")
+	public.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleUpdate()).Methods("PUT")
 
 	technical := s.router.PathPrefix("/tech").Subrouter()
 	technical.HandleFunc("/info", s.handleInfo()).Methods("GET")
+}
+
+func (s *server) handleUpdate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(mux.Vars(r)["employeeId"])
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		e, err := s.store.Employee().GetByID(r.Context(), id)
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		err = json.NewDecoder(r.Body).Decode(&e)
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		err = s.store.Employee().Update(r.Context(), e)
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusAccepted, map[string]string{"message": "employee's info updated"})
+	}
+}
+
+func (s *server) handleDelete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(mux.Vars(r)["employeeId"])
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		if err := s.store.Employee().Delete(r.Context(), id); err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		s.respond(w, r, http.StatusAccepted, map[string]string{"message": "emplyee deleted"})
+	}
+}
+
+func (s *server) handleCreate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		e := new(model.Employee)
+		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		if err := s.store.Employee().Create(r.Context(), e); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		s.respond(w, r, http.StatusCreated, map[string]string{"message": "employee created"})
+	}
+}
+
+func (s *server) handleRetrieveByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(mux.Vars(r)["employeeId"])
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		empl, err := s.store.Employee().GetByID(r.Context(), id)
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		s.respond(w, r, http.StatusOK, empl)
+	}
 }
 
 func (s *server) handleRetrieveAll() http.HandlerFunc {
@@ -56,13 +136,6 @@ func (s *server) handleRetrieveAll() http.HandlerFunc {
 			return
 		}
 		s.respond(w, r, http.StatusOK, map[string][]*model.Employee{"employees": empls})
-	}
-}
-
-// handleHello ...
-func (s *server) handleHello() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		_, _ = io.WriteString(w, "hello")
 	}
 }
 
