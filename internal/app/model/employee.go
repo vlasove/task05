@@ -15,6 +15,7 @@ type Employee struct {
 	GoodJobCount int
 }
 
+// Validate ...
 func (e *Employee) Validate() error {
 	return validation.ValidateStruct(
 		e,

@@ -51,13 +51,13 @@ func (s *APIServer) configureStore() error {
 }
 
 // configureRouter ...
-func (a *APIServer) configureRouter() {
-	a.router.HandleFunc("/hello", a.handleHello())
+func (s *APIServer) configureRouter() {
+	s.router.HandleFunc("/hello", s.handleHello())
 }
 
 // handleHello ...
-func (a *APIServer) handleHello() http.HandlerFunc {
+func (s *APIServer) handleHello() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "hello")
+		_, _ = io.WriteString(w, "hello")
 	}
 }
