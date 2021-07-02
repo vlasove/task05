@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/vlasove/test05/internal/app/model"
+	"github.com/vlasove/test05/internal/app/store"
 )
 
 var (
@@ -22,7 +23,7 @@ func New() *Store {
 }
 
 // Employee public method for managment repository
-func (s *Store) Employee() *EmployeeRepository {
+func (s *Store) Employee() store.EmployeeRepository {
 	if s.employeeRepository != nil {
 		return s.employeeRepository
 	}

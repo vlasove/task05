@@ -1,6 +1,8 @@
 package teststore
 
 import (
+	"context"
+
 	"github.com/vlasove/test05/internal/app/model"
 )
 
@@ -11,7 +13,7 @@ type EmployeeRepository struct {
 }
 
 // Create ...
-func (r *EmployeeRepository) Create(e *model.Employee) error {
+func (r *EmployeeRepository) Create(ctx context.Context, e *model.Employee) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}
@@ -21,7 +23,7 @@ func (r *EmployeeRepository) Create(e *model.Employee) error {
 }
 
 // Delete ...
-func (r *EmployeeRepository) Delete(id int) error {
+func (r *EmployeeRepository) Delete(ctx context.Context, id int) error {
 	_, ok := r.employees[id]
 	if !ok {
 		return ErrRecordNotFound
@@ -31,7 +33,7 @@ func (r *EmployeeRepository) Delete(id int) error {
 }
 
 // Update ...
-func (r *EmployeeRepository) Update(e *model.Employee) error {
+func (r *EmployeeRepository) Update(ctx context.Context, e *model.Employee) error {
 	_, ok := r.employees[e.ID]
 	if !ok {
 		return ErrRecordNotFound
@@ -41,7 +43,7 @@ func (r *EmployeeRepository) Update(e *model.Employee) error {
 }
 
 // GetAll ...
-func (r *EmployeeRepository) GetAll() ([]*model.Employee, error) {
+func (r *EmployeeRepository) GetAll(ctx context.Context) ([]*model.Employee, error) {
 	ans := []*model.Employee{}
 	for _, e := range r.employees {
 		ans = append(ans, e)
@@ -50,7 +52,7 @@ func (r *EmployeeRepository) GetAll() ([]*model.Employee, error) {
 }
 
 // GetByID ...
-func (r *EmployeeRepository) GetByID(id int) (*model.Employee, error) {
+func (r *EmployeeRepository) GetByID(ctx context.Context, id int) (*model.Employee, error) {
 	e, ok := r.employees[id]
 	if !ok {
 		return nil, ErrRecordNotFound

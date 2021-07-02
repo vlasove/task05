@@ -6,13 +6,13 @@ import (
 
 // Employee ...
 type Employee struct {
-	ID           int
-	Name         string
-	LastName     string
-	Patronymic   string
-	Phone        string
-	Position     string
-	GoodJobCount int
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	LastName     string `json:"last_name"`
+	Patronymic   string `json:"patronymic"`
+	Phone        string `json:"phone"`
+	Position     string `json:"position"`
+	GoodJobCount int    `json:"good_job_count"`
 }
 
 // Validate ...
