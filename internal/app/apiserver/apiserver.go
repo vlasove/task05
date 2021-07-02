@@ -1,63 +1,43 @@
 package apiserver
 
 import (
-	"io"
+	"database/sql"
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"github.com/vlasove/test05/internal/app/store"
+	_ "github.com/lib/pq" // postgres driver
+	"github.com/vlasove/test05/internal/app/store/sqlstore"
 )
 
-// APIServer ...
-type APIServer struct {
-	config *Config
-	router *mux.Router
-	store  *store.Store
-}
-
-// New ...
-func New(config *Config) *APIServer {
-	return &APIServer{
-		config: config,
-		router: mux.NewRouter(),
-	}
-}
-
 // Start ...
-func (s *APIServer) Start() error {
-	log.Println("starting api server at port", s.config.BindAddr)
-
-	s.configureRouter()
-	log.Println("router configurated successfully")
-
+func Start(config *Config) error {
 	log.Println("starting connection to database...")
-	if err := s.configureStore(); err != nil {
+	config.DatabaseURL = config.DatabaseConnector.buildConnStr()
+	db, err := newDB(config.DatabaseURL)
+	if err != nil {
 		return err
 	}
-	log.Println("database successfully connected")
+	defer db.Close()
+	log.Println("connection successfully builded")
 
-	return http.ListenAndServe(s.config.BindAddr, s.router)
+	log.Println("starting configurating storage...")
+	store := sqlstore.New(db)
+	log.Println("starting configurating API server ...")
+	srv := newServer(store)
+	log.Println("API server is ready. Working on port", config.BindAddr)
+
+	return http.ListenAndServe(config.BindAddr, srv)
 }
 
-// configureStore ...
-func (s *APIServer) configureStore() error {
-	st := store.New(s.config.Store)
-	if err := st.Open(); err != nil {
-		return err
+// newDB ...
+func newDB(databaseURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", databaseURL)
+	if err != nil {
+		return nil, err
 	}
-	s.store = st
-	return nil
-}
 
-// configureRouter ...
-func (s *APIServer) configureRouter() {
-	s.router.HandleFunc("/hello", s.handleHello())
-}
-
-// handleHello ...
-func (s *APIServer) handleHello() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		_, _ = io.WriteString(w, "hello")
+	if err := db.Ping(); err != nil {
+		return nil, err
 	}
+	return db, nil
 }
