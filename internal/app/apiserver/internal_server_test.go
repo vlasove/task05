@@ -20,7 +20,7 @@ func TestServer_HandleInfo(t *testing.T) {
 	s := newServer(store)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest(http.MethodGet, "/tech/info", nil)
-	s.ServeHTTP(rec, req)
+	s.handleInfo().ServeHTTP(rec, req)
 	assert.Equal(t, rec.Code, http.StatusOK)
 
 	var v map[string]interface{}
@@ -41,11 +41,11 @@ func TestServer_HandleRetrieveAll(t *testing.T) {
 		s.handleRetrieveAll().ServeHTTP(rec, req)
 		assert.Equal(t, rec.Code, http.StatusOK)
 
-		var v map[string][]*model.Employee
+		var v []*model.Employee
 		err := json.NewDecoder(rec.Body).Decode(&v)
 		assert.NoError(t, err)
 		assert.NotNil(t, v)
-		assert.Equal(t, len(v["employees"]), 0)
+		assert.Equal(t, len(v), 0)
 
 	})
 
@@ -59,11 +59,11 @@ func TestServer_HandleRetrieveAll(t *testing.T) {
 		s.handleRetrieveAll().ServeHTTP(rec, req)
 		assert.Equal(t, rec.Code, http.StatusOK)
 
-		var v map[string][]*model.Employee
+		var v []*model.Employee
 		err := json.NewDecoder(rec.Body).Decode(&v)
 		assert.NoError(t, err)
 		assert.NotNil(t, v)
-		assert.Equal(t, len(v["employees"]), 2)
+		assert.Equal(t, len(v), 2)
 	})
 }
 

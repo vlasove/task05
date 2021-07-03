@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"net/http"
 	"strconv"
 
@@ -41,14 +42,22 @@ func (s *server) configureRouter() {
 	s.router.Use(s.logRequest)
 	s.router.Use(s.setContentLang)
 	s.router.Use(s.setContentType)
+	s.router.Use(s.authMiddleware)
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
 	public := s.router.PathPrefix("/api/v1").Subrouter()
-	public.HandleFunc("/employees", s.handleRetrieveAll()).Methods("GET")
+
 	public.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleRetrieveByID()).Methods("GET")
-	public.HandleFunc("/employees", s.handleCreate()).Methods("POST")
 	public.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleDelete()).Methods("DELETE")
-	public.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleUpdate()).Methods("PUT")
+
+	acceptbl := s.router.PathPrefix("/api/v1").Subrouter()
+	acceptbl.Use(s.acceptMiddleware)
+	acceptbl.HandleFunc("/employees", s.handleRetrieveAll()).Methods("GET")
+
+	jsonable := s.router.PathPrefix("/api/v1").Subrouter()
+	jsonable.Use(s.checkContentType)
+	jsonable.HandleFunc("/employees", s.handleCreate()).Methods("POST")
+	jsonable.HandleFunc("/employees/{employeeId:[0-9]+}", s.handleUpdate()).Methods("PUT")
 
 	technical := s.router.PathPrefix("/tech").Subrouter()
 	technical.HandleFunc("/info", s.handleInfo()).Methods("GET")
@@ -137,7 +146,9 @@ func (s *server) handleRetrieveAll() http.HandlerFunc {
 			s.error(w, r, err)
 			return
 		}
-		s.respond(w, r, http.StatusOK, map[string][]*model.Employee{"employees": empls})
+
+		s.respond(w, r, http.StatusOK, empls)
+
 	}
 }
 
@@ -160,7 +171,13 @@ func (s *server) handleInfo() http.HandlerFunc {
 func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
 	w.WriteHeader(code)
 	if data != nil {
-		_ = json.NewEncoder(w).Encode(data)
+		switch {
+		case r.Context().Value(ctxXMLKey):
+			_ = xml.NewEncoder(w).Encode(data)
+		default:
+			_ = json.NewEncoder(w).Encode(data)
+		}
+
 	}
 
 }
@@ -208,5 +225,4 @@ func (s *server) error(w http.ResponseWriter, r *http.Request, err error) {
 		return
 
 	}
-	//s.respond(w, r, code, map[string]string{"error": err.Error()})
 }
